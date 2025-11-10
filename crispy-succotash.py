@@ -1,7 +1,7 @@
 from colorama import Back, Fore, Style
-import unicodedata
 
-x = input(
+#Asking the user to input.
+word = input(
     f"{Style.BRIGHT}Ukrainian Noun Declensor {Style.NORMAL}by rainbowpawsies \n"
     f"{Style.NORMAL}{Fore.RED}NB!{Fore.RESET}This tool is currently in alpha, and it does not account for many exeptions. \n For further notes and help, type {Style.BRIGHT}help{Style.NORMAL}\n"
     f"{Style.BRIGHT}Enter a noun down below: \n {Style.DIM}"
@@ -12,8 +12,9 @@ type_3_exceptions = ['кров', 'любов', 'ніч', 'піч']
 masculine_exceptions = ['тато', 'дядько', 'суддя', 'дідько']
 vowels = ['а', 'е', 'є', 'и', 'і', 'о', 'у', 'ю', 'я']
 
-# Deafault cases
-nominative = ""
+# Deafault cases. Declaration in the beginning is to later use the functions as global.
+# Nominative declaration happens here, unlike for other cases.
+nominative = word
 genitive = ""
 dative = ""
 accusative = ""
@@ -21,166 +22,286 @@ instrumental = ""
 locative = ""
 vocative = ""
 
-def remove_first_vowel(x):
+# A function to remove the first vowel from a word.
+def remove_first_vowel(word):
     vowels = "ауеєиіїоуюя"
-    for i, char in enumerate(x):
+    for i, char in enumerate(word):
         if char in vowels:
-            return x[:i] + x[i+1:]
-    return x  # Return the original word if no vowels are found
+            return word[:i] + word[i+1:]
+    return word  # Return the original word if no vowels are found
+
+# A function to soften the last consonant of a word if applicable.
+# This is used in declenstion type I, both hard and mixed subtypes.
+def consonant_softening(word):
+    softening_map = {
+        'д': 'дж',
+        'т': 'ч',
+        'з': 'ж',
+        'с': 'ш',
+        'л': 'ль',
+        'н': 'нь',
+        'р': 'рь',
+        'к': 'ц',
+        'г': 'ж',
+        'х': 'ш'
+    }
+    if word[-1] in softening_map:
+        return word[:-1] + softening_map[word[-1]]
+    else:
+        return word
 
 # Checking for correct script usage
-def check_for_script(x):
-    for char in x:
-        if unicodedata.name(char).startswith('CYRILLIC'):
+def check_for_script(word):
+    for char in word:
+        if char in "йцукенгшщзхїєждлорпавіфячсмитьбюґЙЦУКЕНГШЩЗХЇЄЖДЛОРПАВІФЯЧСМИТЬБЮҐ'":
             continue
         else:
             return False
     return True
 
 # Determining the gender of the noun
-def gender(x):
-    if x[-1:] == 'а' or x[-1:] == 'я' or x[-4:] == 'ість':
+def gender(word):
+    if word[-1:] == 'а' or word[-1:] == 'я' or word[-4:] == 'ість':
         return 'feminine'
-    elif (x[-1:] not in vowels) or (x in masculine_exceptions):
+    elif (word[-1:] not in vowels) or (word in masculine_exceptions):
         return 'masculine'
-    elif (x[-1:] == 'о' and x not in masculine_exceptions) or x[-1:] == 'е' or (x[-1] == 'я' and len(x) >= 3 and x[-2] == x[-3]):
+    elif (word[-1:] == 'о' and word not in masculine_exceptions) or word[-1:] == 'е' or (word[-1] == 'я' and len(word) >= 3 and word[-2] == word[-3]):
         return 'neuter'    
     else:
-        print(f"{Back.RED}{Fore.WHITE}Error! Code: Rainbow. {Back.RESET}{Fore.RESET}\n")
+        print(f"{Back.RED}{Fore.WHITE}Error! Code: Rainbow. {Back.RESET}{Fore.RESET}\n Check if your word is in singular form.")
         return None
 
-
-# Determining declension type
-def declension_type(x):
-    if (gender(x) in ['feminine', 'masculine'] and x[-1:] not in ['а', 'я']) or (gender(x) == 'neuter' and x[-2:] == 'ще'):
+# Determining declension type to futher proceed with declension
+def declension_type(word):
+    if (gender(word) in ['feminine', 'masculine'] and word[-1:] not in ['а', 'я']) or (gender(word) == 'neuter' and word[-2:] == 'ще'):
         return "II" # Second declension type
-    elif (x[-4:] == 'ість') or (x[-2:] == "'я") or (x in type_3_exceptions):
+    elif (word[-4:] == 'ість') or (word[-2:] == "'я") or (word in type_3_exceptions):
         return "III"  # Third declension type
-    elif x[-1:] == 'а' or x[-1:] == 'я':
+    elif word[-1:] == 'а' or word[-1:] == 'я':
         return "I" # First declension type
     else:
         return "IV" # Fourth declension type
     
-def declension_type1(x):
-    global nominative, genitive, dative, accusative, instrumental, locative, vocative
-    nominative = x
+# The declension function for type I
+def declension_type1(word):
+    global genitive, dative, accusative, instrumental, locative, vocative
     # Subtype determination
-    if x[-1] in ['я','ю','є','ї','ь']: # Any of the soft subtypes
-        if x[-2] in vowels: # Soft II
-            genitive = x[:-1] + 'ї'; dative = x[:-1] + 'ї'; accusative = x[:-1] + 'ю'; instrumental = x[:-1] + 'єю'; locative = x[:-1] + 'ї'; vocative = x[:-1] + 'є'
+    if word[-1] in ['я','ю','є','ї','ь']: # Any of the soft subtypes
+        if word[-2] in vowels: # Soft II
+            genitive = word[:-1] + 'ї'; 
+            dative = word[:-1] + 'ї'; 
+            accusative = word[:-1] + 'ю'; 
+            instrumental = word[:-1] + 'єю'; 
+            locative = word[:-1] + 'ї'; 
+            vocative = word[:-1] + 'є'
         else: # Soft I
-            genitive = x[:-1] + 'і'; dative = x[:-1] + 'і'; accusative = x[:-1] + 'ю'; instrumental = x[:-1] + 'ею'; locative = x[:-1] + 'і'; vocative = x[:-1] + 'е'
-    elif x [-2] in ['ш', 'ж', 'ч', 'щ', 'ц']: # Mixed subtype
-        genitive = x[:-1] + 'і'; dative = x[:-1] + 'і'; accusative = x[:-1] + 'у'; instrumental = x[:-1] + 'ею'; locative = x[:-1] + 'і'; vocative = x[:-1] + 'є'
+            genitive = word[:-1] + 'і'; 
+            dative = word[:-1] + 'і'; 
+            accusative = word[:-1] + 'ю'; 
+            instrumental = word[:-1] + 'ею'; 
+            locative = word[:-1] + 'і'; 
+            vocative = word[:-1] + 'е'
+    elif word [-2] in ['ш', 'ж', 'ч', 'щ', 'ц']: # Mixed subtype
+        genitive = word[:-1] + 'і'; 
+        dative = consonant_softening(word[:-1]) + 'і'; 
+        accusative = word[:-1] + 'у'; 
+        instrumental = word[:-1] + 'ею'; 
+        locative = consonant_softening(word[:-1]) + 'і'; 
+        vocative = word[:-1] + 'є'
     else: # Hard subtype
-        genitive = x[:-1] + 'и'; dative = x[:-1] + 'і'; accusative = x[:-1] + 'у'; instrumental = x[:-1] + 'ою'; locative = x[:-1] + 'і'; vocative = x[:-1] + 'о'
+        genitive = word[:-1] + 'и'; 
+        dative = consonant_softening(word[:-1]) + 'і'; 
+        accusative = word[:-1] + 'у'; 
+        instrumental = word[:-1] + 'ою'; 
+        locative = consonant_softening(word[:-1]) + 'і'; 
+        vocative = word[:-1] + 'о'
 
+# Asking the user about the meaning category of the noun for declension type II.
+# This is required since unlike other declension types, type II has different endings based on the meaning of the noun, and not only on its ending.
 def ask_type2_category():
     response = input(
         f"{Style.NORMAL}The noun is of declension type II! We will need to know a bit more... \n"
         f"{Style.BRIGHT}Do you consider this noun to fall under one of these categories:{Style.NORMAL} \n"
-        f"names of persons and beings:{Style.DIM} applicant, horse, mosquito, Dmitry, {Style.NORMAL}\n" 
-        f"names of specific objects that can be counted:{Style.DIM} notebook, knife, pencil,{Style.NORMAL}\n"
-        f"proper names of settlements:{Style.DIM} Uzhhorod, Ternopil,{Style.NORMAL}\n"
-        f"names of water bodies with a stressed ending:{Style.DIM} Dnieper, Donets,{Style.NORMAL}\n"
-        f"names of length, area, weight, volume, time intervals:{Style.DIM} meter, gram, week (but also year, age),{Style.NORMAL}\n"
-        f"nouns-terms:{Style.DIM} atom, square, case {Style.NORMAL}\n"
-        f"names of buildings and their parts:{Style.DIM} greenhouse, corridor, garage.{Style.NORMAL}\n"
+        f"names of persons and beings:{Style.DIM} applicant, кінь, комар, Дмитро, {Style.NORMAL}\n" 
+        f"names of specific objects that can be counted:{Style.DIM} зошит, ніж, олівець,{Style.NORMAL}\n"
+        f"proper names of settlements:{Style.DIM} Ужгород, Тернопіль,{Style.NORMAL}\n"
+        f"names of water bodies with a stressed ending:{Style.DIM} Дніпро, Донець{Style.NORMAL}\n"
+        f"names of length, area, weight, volume, time intervals:{Style.DIM} метр, грам, тиждень (but also рік, вік),{Style.NORMAL}\n"
+        f"nouns-terms:{Style.DIM} атом, квадрат, відмінок {Style.NORMAL}\n"
+        f"names of buildings and their parts:{Style.DIM} коридор, гараж.{Style.NORMAL}\n"
         f"{Style.BRIGHT}Type 'yes' if the noun fits any category, otherwise type 'no': {Style.NORMAL}"
-    ).lower()
-    return response == "yes"
-
-def declension_type2_logic(x, is_a_category):
-    global nominative, genitive, dative, accusative, instrumental, locative, vocative
-    nominative = x
-    if is_a_category:
-        if x[-1] in ['й','ь']: # Any of the soft subtypes
-            if x[-1] == 'й': # Soft II
-                genitive = x[:-1] + 'ю'; dative = x[:-1] + 'ю'; accusative = x; instrumental = x[:-1] + 'єм'; locative = x[:-1] + 'ю'; vocative = x[:-1] + 'ю'
-            else: # Soft I
-                genitive = (remove_first_vowel(x))[:-1] + 'я' ; dative = (remove_first_vowel(x))[:-1] + 'ю'; accusative = x; instrumental = (remove_first_vowel(x))[:-1] + 'ем'; locative = (remove_first_vowel(x))[:-1] + 'ю'; vocative = x
-        elif x[-2] in ['ш', 'ж', 'ч', 'щ', 'ц']: # Mixed subtype
-            genitive = x + 'а'; dative = x + 'у'; accusative = x; instrumental = x + 'ем'; locative = x + 'і'; vocative = x
-        else: # Hard subtype
-            genitive = x + 'а'; dative = x + 'у'; accusative = x; instrumental = x + 'ом'; locative = x + 'у'; vocative = x + 'е'
+    )
+    if response in {'yes', 'Yes', 'YES', 'так', 'Так', 'ТАК'}:
+        return True
+    elif response in {'no', 'No', 'NO', 'ні', 'Ні', 'НІ'}:
+        return False
     else:
-        if x[-1] in ['й','ь']: # Any of the soft subtypes
-            if x[-1] == 'й': # Soft II
-                genitive = x[:-1] + 'ю'; dative = x[:-1] + 'ю'; accusative = x; instrumental = x[:-1] + 'єм'; locative = x[:-1] + 'ю'; vocative = x[:-1] + 'ю'
+        print(f"{Back.RED}{Fore.WHITE}Error! Code: Echo. {Back.RESET}{Fore.RESET}\n (Please answer with 'yes' or 'no'. This can be in Ukrainian as well.)")
+        return ask_type2_category()
+
+# The declension logic for type II. It is separated from the main function to allow easier testing.
+def declension_type2_logic(word, is_a_category):
+    global genitive, dative, accusative, instrumental, locative, vocative
+    if is_a_category:
+        if word[-1] in ['й','ь']: # Any of the soft subtypes
+            if word[-1] == 'й': # Soft II
+                genitive = word[:-1] + 'ю'; 
+                dative = word[:-1] + 'ю'; 
+                accusative = word; 
+                instrumental = word[:-1] + 'єм'; 
+                locative = word[:-1] + 'ю'; 
+                vocative = word[:-1] + 'ю'
             else: # Soft I
-                genitive = (remove_first_vowel(x))[:-1] + 'я' ; dative = (remove_first_vowel(x))[:-1] + 'ю'; accusative = x; instrumental = (remove_first_vowel(x))[:-1] + 'ем'; locative = (remove_first_vowel(x))[:-1] + 'ю'; vocative = x
-        elif x[-2] in ['ш', 'ж', 'ч', 'щ', 'ц']: # Mixed subtype
-            genitive = x + 'у'; dative = x + 'у'; accusative = x; instrumental = x + 'ем'; locative = x + 'і'; vocative = x
+                genitive = (remove_first_vowel(word))[:-1] + 'я' ; 
+                dative = (remove_first_vowel(word))[:-1] + 'ю'; 
+                accusative = word; 
+                instrumental = (remove_first_vowel(word))[:-1] + 'ем'; 
+                locative = (remove_first_vowel(word))[:-1] + 'ю'; 
+                vocative = word
+        elif word[-2] in ['ш', 'ж', 'ч', 'щ', 'ц']: # Mixed subtype
+            genitive = word + 'а'; 
+            dative = word + 'у';
+            accusative = word; 
+            instrumental = word + 'ем'; 
+            locative = word + 'і'; 
+            vocative = word
         else: # Hard subtype
-            genitive = x + 'у'; dative = x + 'у'; accusative = x + "а"; instrumental = x + 'ом'; locative = x + 'у'; vocative = x + 'у'
+            genitive = remove_first_vowel(word) + 'а'; 
+            dative = remove_first_vowel(word) + 'у'; 
+            accusative = word; 
+            instrumental = word + 'ом'; 
+            locative = remove_first_vowel(word) + 'у'; 
+            vocative = word + 'е'
+    else:
+        if word[-1] in ['й','ь']: # Any of the soft subtypes
+            if word[-1] == 'й': # Soft II
+                genitive = word[:-1] + 'ю'; 
+                dative = word[:-1] + 'ю'; 
+                accusative = word; 
+                instrumental = word[:-1] + 'єм'; 
+                locative = word[:-1] + 'ю'; 
+                vocative = word[:-1] + 'ю'
+            else: # Soft I
+                genitive = (remove_first_vowel(word))[:-1] + 'я' ; 
+                dative = (remove_first_vowel(word))[:-1] + 'ю'; 
+                accusative = word; 
+                instrumental = (remove_first_vowel(word))[:-1] + 'ем'; 
+                locative = (remove_first_vowel(word))[:-1] + 'ю'; 
+                vocative = word
+        elif word[-2] in ['ш', 'ж', 'ч', 'щ', 'ц']: # Mixed subtype
+            genitive = word + 'у'; 
+            dative = word + 'у';
+            accusative = word; 
+            instrumental = word + 'ем'; 
+            locative = word + 'і'; 
+            vocative = word
+        else: # Hard subtype
+            genitive = word + 'у'; 
+            dative = word + 'у'; 
+            accusative = word + "а"; 
+            instrumental = word + 'ом'; 
+            locative = word + 'у'; 
+            vocative = word + 'у'
 
-def declension_type2(x):
+# The combined function for declension type II
+def declension_type2(word):
     is_a_category = ask_type2_category()
-    declension_type2_logic(x, is_a_category)
+    declension_type2_logic(word, is_a_category)
 
-def declension_type3(x):
-    global nominative, genitive, dative, accusative, instrumental, locative, vocative
-    nominative = x
+# The declension function for type III
+def declension_type3(word):
+    global genitive, dative, accusative, instrumental, locative, vocative
     # Subtype determination
-    if x[-1] in ['я','ю','є','ї','ь']: # Any of the soft subtypes
-        if x[-2] in vowels: # Soft II
-            genitive = x[:-1] + 'ї'; dative = x[:-1] + 'ї'; accusative = x[:-1] + 'ю'; instrumental = x[:-1] + 'єю'; locative = x[:-1] + 'ї'; vocative = x[:-1] + 'є'
+    if word[-1] in ['я','ю','є','ї','ь']: # Any of the soft subtypes
+        if word[-2] in vowels: # Soft II
+            genitive = word[:-1] + 'ї'; 
+            dative = word[:-1] + 'ї'; 
+            accusative = word[:-1] + 'ю'; 
+            instrumental = word[:-1] + 'єю'; 
+            locative = word[:-1] + 'ї'; 
+            vocative = word[:-1] + 'є'
         else: # Soft I
-            genitive = x[:-1] + 'і'; dative = x[:-1] + 'і'; accusative = x[:-1] + 'ю'; instrumental = x[:-1] + 'ею'; locative = x[:-1] + 'і'; vocative = x[:-1] + 'е'
-    elif x == 'мати': # Exception
-        genitive = 'матері'; dative = 'матері'; accusative = 'матір'; instrumental = "матір'ю"; locative = 'матері'; x[:-1] + 'мати, мамо, матінко'
+            genitive = word[:-1] + 'і'; 
+            dative = word[:-1] + 'і'; 
+            accusative = word[:-1] + 'ю'; 
+            instrumental = word[:-1] + 'ею'; 
+            locative = word[:-1] + 'і'; 
+            vocative = word[:-1] + 'е'
+    elif word == 'мати': # Exception
+        genitive = 'матері'; 
+        dative = 'матері'; 
+        accusative = 'матір'; 
+        instrumental = "матір'ю"; 
+        locative = 'матері'; 
+        word[:-1] + 'мати, мамо, матінко'
    
-def declension_type4(x):
-    global nominative, genitive, dative, accusative, instrumental, locative, vocative
-    nominative = x
+# The declension function for type IV
+def declension_type4(word):
+    global genitive, dative, accusative, instrumental, locative, vocative
     # Subtype determination
-    if x[-1] == "'я": # The 'ije' words in Proto-Slavic
-        genitive = x[:-2] + 'ені' if x != "сім'я" else x[:-1] + 'ї'; dative = x[:-2] + 'ені'; accusative = x; instrumental = x[:-2] + 'енем'; locative = x[:-2] + 'ені'; vocative = x
-    elif x[-1] == 'а' or x[-1] == 'я': # Ending in 'а' or 'я'
-        genitive = x + 'ти'; dative = 'ті'; accusative = x; instrumental = x + 'м'; locative = x + 'ті'; vocative = x
+    if word[-1] == "'я": # The 'ije' words in Proto-Slavic
+        genitive = word[:-2] + 'ені' if word != "сім'я" else word[:-1] + 'ї'; 
+        dative = word[:-2] + 'ені'; 
+        accusative = word; 
+        instrumental = word[:-2] + 'енем'; 
+        locative = word[:-2] + 'ені'; 
+        vocative = word
+    elif word[-1] == 'а' or word[-1] == 'я': # Ending in 'а' or 'я'
+        genitive = word + 'ти'; 
+        dative = 'ті'; 
+        accusative = word; 
+        instrumental = word + 'м'; 
+        locative = word + 'ті'; 
+        vocative = word
 
-# Printing the results
-is_cyrillic = check_for_script(x)
-while not is_cyrillic or len(x) < 2 or x == "621" or x == "help":
-    if x == "621":
+# Printing the results. This is the actual part of the code.
+is_cyrillic = check_for_script(word)
+while not is_cyrillic or len(word) < 2 or word == "6" or word == "help":
+    if word == "6":
         print(f"{Back.RED}{Fore.WHITE}ABORTED.{Back.RESET}{Fore.RESET}\n (You have exited the program).")
         break
-    elif x == "help":
+    elif word == "help":
         print(
             f"{Style.NORMAL}{Back.MAGENTA}{Fore.WHITE}==== HELP MENU ===={Back.RESET}{Fore.RESET} \n"
-            f"{Style.DIM}Ukrainian Noun Declensor v. Alpha 0.10.27.1 from October 27, 2025{Style.NORMAL}\n"
+            f"{Style.DIM}Ukrainian Noun Declensor v. Alpha 0.11.10.1 from November 10, 2025{Style.NORMAL}\n"
             f"— To use this tool, simply enter a Ukrainian noun in Cyrillic script. \n"
             f"— The program will determine the gender and the declension type of the noun. \n"
-            f"— To exit the program, type '621' and press Enter. \n")
-        x = input(f"{Style.BRIGHT}Enter a noun down below: \n {Style.DIM}")
+            f"— To exit the program, type '6' and press Enter. \n")
+        word = input(f"{Style.BRIGHT}Enter a noun down below: \n {Style.DIM}")
     elif not is_cyrillic:
         print(f"{Back.RED}{Fore.WHITE}Error! Code: Carrot. {Back.RESET}{Fore.RESET}\n (Please enter a word in Cyrillic script).")
-        x = input(f"{Style.BRIGHT}Enter a noun down below: \n {Style.DIM}")
-        is_cyrillic = check_for_script(x)
-    elif len(x) < 2:
+        word = input(f"{Style.BRIGHT}Enter a noun down below: \n {Style.DIM}")
+        is_cyrillic = check_for_script(word)
+    elif len(word) < 2:
         print(f"{Back.RED}{Fore.WHITE}Error! Code: Shorty. {Back.RESET}{Fore.RESET}\n (Please enter a noun with at least 2 letters).")
-        x = input(f"{Style.BRIGHT}Enter a noun down below: \n {Style.DIM}")
-        is_cyrillic = check_for_script(x)
+        word = input(f"{Style.BRIGHT}Enter a noun down below: \n {Style.DIM}")
+        is_cyrillic = check_for_script(word)
 else:
-    while gender(x) is None:
-        x = input(f"{Style.BRIGHT}Enter a noun down below: \n {Style.DIM}")
-        is_cyrillic = check_for_script(x)
-        if not is_cyrillic or len(x) < 2 or x == "621" or x == "help":
+    while gender(word) is None:
+        word = input(f"{Style.BRIGHT}Enter a noun down below: \n {Style.DIM}")
+        is_cyrillic = check_for_script(word)
+        if not is_cyrillic or len(word) < 2 or word == "6" or word == "help":
             break
-    if declension_type(x) == "I":
-        declension_type1(x)
-    elif declension_type(x) == "II":
-        declension_type2(x)
-    elif declension_type(x) == "III":
-        declension_type3(x)
-    elif declension_type(x) == "IV":
-        declension_type4(x)
+    if declension_type(word) == "I":
+        declension_type1(word)
+    elif declension_type(word) == "II":
+        declension_type2(word)
+    elif declension_type(word) == "III":
+        declension_type3(word)
+    elif declension_type(word) == "IV":
+        declension_type4(word)
     else:
         print(f"{Back.RED}{Fore.WHITE}Error! Code: Riverside. {Back.RESET}{Fore.RESET}\n (No declension type selected).")
-        x = input(f"{Style.BRIGHT}Enter a noun down below: \n {Style.DIM}")
-        is_cyrillic = check_for_script(x)
+        word = input(f"{Style.BRIGHT}Enter a noun down below: \n {Style.DIM}")
+        is_cyrillic = check_for_script(word)
     print(
-        f"{Style.NORMAL}==== WORD: {x} ==== \n"
-        f"— Gender: {gender(x)}\n"
-        f"==== DECLENSION TYPE {declension_type(x)} ==== \n"
-        f"Nominative (Називний): {nominative}\n Genetive (Родовий): {genitive}\n Dative (Давальний): {dative}\n Accusative (Звинувальний): {accusative}\n Instrumental (Орудний): {instrumental}\n Locative (Місцевий): {locative}\n Vocative (Кличний): {vocative}\n")
+        f"{Style.NORMAL}==== WORD: {word} ==== \n"
+        f"— Gender: {gender(word)}\n"
+        f"==== DECLENSION TYPE {declension_type(word)} ==== \n"
+        f"Nominative (Називний): {nominative}\n" 
+        f"Genetive (Родовий): {genitive}\n" 
+        f"Dative (Давальний): {dative}\n" 
+        f"Accusative (Звинувальний): {accusative}\n" 
+        f"Instrumental (Орудний): {instrumental}\n" 
+        f"Locative (Місцевий): на/в {locative}\n" 
+        f"Vocative (Кличний): {vocative}\n")
